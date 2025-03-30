@@ -23,7 +23,7 @@ const client = new MongoClient(process.env.MONGO_URI);
 async function start() {
   try {
     await client.connect();
-    const db = client.db("pub_trivia");
+    const db = client.db("pub-trivia");
     const gamesCollection = db.collection("games");
 
     // ✅ Routes defined after MongoDB is ready
