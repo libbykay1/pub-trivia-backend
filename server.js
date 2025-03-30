@@ -2,6 +2,11 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
 require("dotenv").config();
+const gamesRoutes = require("./routes/games");
+const usersRoutes = require("./routes/users");
+const locationsRoutes = require("./routes/locations");
+
+
 
 const app = express();
 const allowedOrigins = [
@@ -21,6 +26,9 @@ const allowedOrigins = [
   );
 
 app.use(express.json());
+app.use("/locations", locationsRoutes);
+app.use("/games", gamesRoutes);
+app.use("/users", usersRoutes);
 
 const client = new MongoClient(process.env.MONGO_URI);
 
