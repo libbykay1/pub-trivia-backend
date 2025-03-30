@@ -14,10 +14,7 @@ const allowedOrigins = [
   "https://your-frontend.netlify.app" // replace this later with your real Netlify URL
 ];
 
-app.use((req, res, next) => {
-  console.log("🌐 Incoming origin:", req.headers.origin);
-  next();
-});
+
 
 app.use(
   cors({
