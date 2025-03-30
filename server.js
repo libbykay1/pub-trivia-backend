@@ -8,6 +8,10 @@ const allowedOrigins = [
     "http://localhost:5173", // for dev
     "https://your-frontend.netlify.app", // for prod (replace with real URL)
   ];
+  app.use((req, res, next) => {
+    console.log("🌐 Incoming origin:", req.headers.origin);
+    next();
+  });
 
   app.use(
     cors({
