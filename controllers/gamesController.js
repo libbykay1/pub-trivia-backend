@@ -18,6 +18,26 @@ async function createGame(req, res) {
   }
 }
 
+async function updateGame(req, res) {
+    const { id } = req.params;
+    const updatedGame = req.body;
+
+    try {
+      const result = await getDB()
+        .collection("games")
+        .findOneAndUpdate(
+          { _id: new ObjectId(id) },
+          { $set: updatedGame },
+          { returnDocument: "after" }
+        );
+
+      res.json(result.value);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to update game", details: err });
+    }
+  }
+
+
 
 async function getGames(req, res) {
   try {
