@@ -25,17 +25,20 @@ async function updateGame(req, res) {
     delete updatedGame._id;
 
     try {
-        const _id = new ObjectId(id);
-
-
+      console.log("🔍 Attempting to update game with ID:", id);
 
       const result = await getDB()
         .collection("games")
         .findOneAndUpdate(
           { _id: new ObjectId(id) },
           { $set: updatedGame },
-          { returnOriginal: false }
+          {
+            returnDocument: "after", // ✅ preferred in newer MongoDB versions
+            returnOriginal: false,   // ✅ fallback for older drivers
+          }
         );
+
+      console.log("🧠 result.value:", result.value);
 
       if (!result.value) {
         return res.status(404).json({ error: "Game not found" });
@@ -44,9 +47,13 @@ async function updateGame(req, res) {
       return res.status(200).json(result.value);
     } catch (err) {
       console.error("❌ Update failed:", err);
-      return res.status(500).json({ error: "Failed to update game", details: err.message });
+      return res.status(500).json({
+        error: "Failed to update game",
+        details: err.message,
+      });
     }
   }
+
 
 
 
