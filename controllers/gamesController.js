@@ -1,5 +1,5 @@
 const { getDB } = require("../db");
-const { ObjectId } = require("mongodb");
+const { ObjectId, ReturnDocument } = require("mongodb");
 
 
 async function createGame(req, res) {
@@ -35,7 +35,7 @@ async function updateGame(req, res) {
         .findOneAndUpdate(
           { _id: new ObjectId(id) },
           { $set: updatedGame },
-          { returnDocument: "after" }
+          { returnDocument: ReturnDocument.AFTER }
         );
 
       if (!result.value) {
