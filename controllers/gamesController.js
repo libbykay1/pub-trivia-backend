@@ -19,7 +19,6 @@ async function createGame(req, res) {
 }
 
 async function updateGame(req, res) {
-    console.log("🛠️ Hit updateGame route!");
     const { id } = req.params;
     const updatedGame = req.body;
 
@@ -29,7 +28,7 @@ async function updateGame(req, res) {
       const result = await getDB()
         .collection("games")
         .findOneAndUpdate(
-          { _id: new ObjectId(id) },
+          { _id: ObjectId.createFromHexString(id) },
           { $set: updatedGame },
           { returnDocument: "after" }
         );
@@ -63,7 +62,7 @@ async function getGameById(req, res) {
     try {
       const game = await getDB()
         .collection("games")
-        .findOne({ _id: new ObjectId(id) });
+        .findOne({ _id: ObjectId.createFromHexString(id) });
       if (!game) return res.status(404).json({ error: "Game not found" });
       res.json(game);
     } catch (err) {
