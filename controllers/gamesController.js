@@ -25,15 +25,12 @@ async function updateGame(req, res) {
     delete updatedGame._id;
 
     try {
-        console.log("🔍 Attempting to update game with ID:", id);
-        console.log("Incoming ID:", id);
-        console.log("Type of ID:", typeof id);
-        console.log("All games:", await getDB().collection("games").find().toArray());
+      console.log("🔍 Attempting to update game with ID:", id);
 
       const result = await getDB()
         .collection("games")
         .findOneAndUpdate(
-          { _id: ObjectId.createFromHexString(id) },
+          { _id: new ObjectId(id) }, // ✅ this is the fix
           { $set: updatedGame },
           { returnDocument: "after" }
         );
@@ -42,13 +39,13 @@ async function updateGame(req, res) {
         return res.status(404).json({ error: "Game not found" });
       }
 
-      // ✅ Only send response once
       return res.status(200).json(result.value);
     } catch (err) {
       console.error("❌ Update failed:", err);
       return res.status(500).json({ error: "Failed to update game", details: err.message });
     }
   }
+
 
 
 
@@ -68,13 +65,16 @@ async function getGameById(req, res) {
     try {
       const game = await getDB()
         .collection("games")
-        .findOne({ _id: ObjectId.createFromHexString(id) });
+        .findOne({ _id: new ObjectId(id) }); // ✅ fixed here
+
       if (!game) return res.status(404).json({ error: "Game not found" });
+
       res.json(game);
     } catch (err) {
-      res.status(500).json({ error: "Failed to fetch game", details: err });
+      res.status(500).json({ error: "Failed to fetch game", details: err.message });
     }
   }
+
 
 
 module.exports = { createGame, getGames, getGameById, updateGame };
