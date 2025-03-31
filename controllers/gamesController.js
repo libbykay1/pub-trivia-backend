@@ -25,12 +25,15 @@ async function updateGame(req, res) {
     delete updatedGame._id;
 
     try {
-      console.log("🔍 Attempting to update game with ID:", id);
+        const _id = new ObjectId(id);
+        console.log("🔍 Looking for _id:", _id);
+        console.log("🧾 Updated data:", updatedGame);
+
 
       const result = await getDB()
         .collection("games")
         .findOneAndUpdate(
-          { _id: new ObjectId(id) }, // ✅ this is the fix
+          { _id: new ObjectId(id) },
           { $set: updatedGame },
           { returnDocument: "after" }
         );
