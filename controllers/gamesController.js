@@ -78,5 +78,24 @@ async function getGameById(req, res) {
   }
 
 
+async function deleteGame(req, res) {
+    const { id } = req.params;
 
-module.exports = { createGame, getGames, getGameById, updateGame };
+    try {
+      const result = await getDB()
+        .collection("games")
+        .deleteOne({ _id: new ObjectId(id) });
+
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("❌ Failed to delete game:", err);
+      res.status(500).json({ error: "Delete failed", details: err.message });
+    }
+  }
+
+
+module.exports = { createGame, getGames, getGameById, updateGame, deleteGame };
