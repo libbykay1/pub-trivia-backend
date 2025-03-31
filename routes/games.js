@@ -4,6 +4,7 @@ const { createGame, getGames, getGameById } = require("../controllers/gamesContr
 
 router.post("/", createGame);
 router.get("/", getGames);
-router.get("/:id", getGameById);
+router.put("/:id", updateGame);
+
 
 module.exports = router;
