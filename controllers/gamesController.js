@@ -25,6 +25,11 @@ async function updateGame(req, res) {
     delete updatedGame._id;
 
     try {
+        console.log("🔍 Attempting to update game with ID:", id);
+        console.log("Incoming ID:", id);
+        console.log("Type of ID:", typeof id);
+        console.log("All games:", await getDB().collection("games").find().toArray());
+
       const result = await getDB()
         .collection("games")
         .findOneAndUpdate(
@@ -37,10 +42,11 @@ async function updateGame(req, res) {
         return res.status(404).json({ error: "Game not found" });
       }
 
-      res.json(result.value);
+      // ✅ Only send response once
+      return res.status(200).json(result.value);
     } catch (err) {
       console.error("❌ Update failed:", err);
-      res.status(500).json({ error: "Failed to update game", details: err.message });
+      return res.status(500).json({ error: "Failed to update game", details: err.message });
     }
   }
 
