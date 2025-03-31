@@ -22,6 +22,8 @@ async function updateGame(req, res) {
     const { id } = req.params;
     const updatedGame = req.body;
 
+    delete updatedGame._id;
+
     try {
       const result = await getDB()
         .collection("games")
@@ -31,9 +33,14 @@ async function updateGame(req, res) {
           { returnDocument: "after" }
         );
 
+      if (!result.value) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
       res.json(result.value);
     } catch (err) {
-      res.status(500).json({ error: "Failed to update game", details: err });
+      console.error("❌ Update failed:", err);
+      res.status(500).json({ error: "Failed to update game", details: err.message });
     }
   }
 
