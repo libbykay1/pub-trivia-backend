@@ -19,6 +19,7 @@ async function createGame(req, res) {
 }
 
 async function updateGame(req, res) {
+    console.log("🛠️ Hit updateGame route!");
     const { id } = req.params;
     const updatedGame = req.body;
 
