@@ -64,4 +64,4 @@ async function getGameById(req, res) {
   }
 
 
-module.exports = { createGame, getGames, getGameById };
+module.exports = { createGame, getGames, getGameById, updateGame };
