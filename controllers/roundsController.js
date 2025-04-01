@@ -42,9 +42,6 @@ async function deleteRound(req, res) {
     }
   }
 
-  const { ObjectId } = require("mongodb");
-const { getDB } = require("../db");
-
 async function getRoundById(req, res) {
   const { id } = req.params;
 
