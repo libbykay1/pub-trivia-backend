@@ -5,6 +5,7 @@ require("dotenv").config();
 const gamesRoutes = require("./routes/games");
 const usersRoutes = require("./routes/users");
 const locationsRoutes = require("./routes/locations");
+const roundsRoutes = require("./routes/rounds");
 const { connectDB } = require("./db");
 
 const app = express();
@@ -29,6 +30,7 @@ app.use(express.json());
 app.use("/locations", locationsRoutes);
 app.use("/games", gamesRoutes);
 app.use("/users", usersRoutes);
+app.use("/rounds", roundsRoutes);
 
 // Start server after DB is connected
 connectDB().then(() => {
