@@ -60,28 +60,32 @@ async function getRoundById(req, res) {
 }
 
 async function updateRound(req, res) {
-    const { id } = req.params;
-    const updatedRound = req.body;
+  const { id } = req.params;
+  const updatedRound = req.body;
 
-    delete updatedRound._id;
+  delete updatedRound._id;
 
-    try {
-      const result = await getDB()
-        .collection("rounds")
-        .findOneAndUpdate(
-          { _id: new ObjectId(id) },
-          { $set: updatedRound },
-          { returnDocument: "after" } // or { returnOriginal: false } for older Mongo drivers
-        );
+  try {
+    const rounds = getDB().collection("rounds");
+    const objectId = new ObjectId(id);
 
-      if (!result.value) {
-        return res.status(404).json({ error: "Round not found" });
-      }
+    console.log("🔁 Updating round with ID:", objectId);
 
-      res.json(result.value);
-    } catch (err) {
-      console.error("❌ Failed to update round:", err);
-      res.status(500).json({ error: "Failed to update round", details: err.message });
+    const updateResult = await rounds.updateOne(
+      { _id: objectId },
+      { $set: updatedRound }
+    );
+
+    if (updateResult.matchedCount === 0) {
+      return res.status(404).json({ error: "Round not found" });
     }
+
+    const updated = await rounds.findOne({ _id: objectId });
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error("❌ Failed to update round:", err);
+    return res.status(500).json({ error: "Failed to update round", details: err.message });
   }
+}
+
 module.exports = { saveRound, getRounds, deleteRound, getRoundById, updateRound };
