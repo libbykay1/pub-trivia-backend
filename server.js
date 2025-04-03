@@ -32,7 +32,10 @@ app.use("/games", gamesRoutes);
 app.use("/users", usersRoutes);
 app.use("/rounds", roundsRoutes);
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+connectDB().then(() => {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
 });
+
