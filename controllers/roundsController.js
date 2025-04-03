@@ -9,10 +9,16 @@ async function saveRound(req, res) {
       published: false,
       createdBy: req.user?.uid || "anonymous", // if using auth
     };
+    if (typeof round._id === "string") {
+      delete round._id;
+    }
 
     const result = await getDB().collection("rounds").insertOne(round);
-    res.json({ success: true, id: result.insertedId });
+    const savedRound = await getDB().collection("rounds").findOne({ _id: result.insertedId });
+
+    res.json(savedRound);
   } catch (err) {
+    console.error("❌ Failed to save round:", err);
     res.status(500).json({ error: "Failed to save round", details: err.message });
   }
 }
