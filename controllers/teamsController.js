@@ -43,6 +43,29 @@ async function getTeamById(req, res) {
   }
 }
 
+// Update a team
+async function updateTeam(req, res) {
+  try {
+    const { id } = req.params;
+    const updatedTeam = req.body;
+    delete updatedTeam._id;
+
+    const teams = getDB().collection("teams");
+    const objectId = new ObjectId(id);
+
+    const updateResult = await teams.updateOne({ _id: objectId }, { $set: updatedTeam });
+    if (updateResult.matchedCount === 0) {
+      return res.status(404).json({ error: "Team not found" });
+    }
+
+    const updated = await teams.findOne({ _id: objectId });
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error("❌ Failed to update team:", err);
+    res.status(500).json({ error: "Failed to update team", details: err.message });
+  }
+}
+
 // Delete a team
 async function deleteTeam(req, res) {
   try {
@@ -59,5 +82,6 @@ module.exports = {
   createTeam,
   getTeams,
   getTeamById,
+  updateTeam,
   deleteTeam,
 };
