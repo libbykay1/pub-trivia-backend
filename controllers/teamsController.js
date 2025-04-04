@@ -7,7 +7,7 @@ async function createTeam(req, res) {
     const team = {
       ...req.body,
       createdAt: new Date(),
-      ownerId: req.user?.uid || null, // optional if unauthenticated
+      ownerId: req.user?.uid || req.body.ownerId || null,
     };
 
     const result = await getDB().collection("teams").insertOne(team);
