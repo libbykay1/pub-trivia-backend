@@ -6,6 +6,9 @@ const gamesRoutes = require("./routes/games");
 const usersRoutes = require("./routes/users");
 const locationsRoutes = require("./routes/locations");
 const roundsRoutes = require("./routes/rounds");
+const teamsRoutes = require("./routes/teams");
+
+
 const { connectDB } = require("./db");
 
 const app = express();
@@ -31,6 +34,7 @@ app.use("/locations", locationsRoutes);
 app.use("/games", gamesRoutes);
 app.use("/users", usersRoutes);
 app.use("/rounds", roundsRoutes);
+app.use("/teams", teamsRoutes);
 
 connectDB().then(() => {
   const PORT = process.env.PORT || 4000;
@@ -38,4 +42,3 @@ connectDB().then(() => {
     console.log(`🚀 Server running on port ${PORT}`);
   });
 });
-
