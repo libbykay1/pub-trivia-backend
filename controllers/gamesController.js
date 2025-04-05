@@ -124,6 +124,31 @@ async function deleteGame(req, res) {
       res.status(500).json({ error: "Failed to update current round", details: err.message });
     }
   }
+  async function addTeamToGame(req, res) {
+    const { code } = req.params;
+    const team = req.body;
+
+    try {
+      const games = getDB().collection("games");
+
+      const game = await games.findOne({ code });
+      if (!game) return res.status(404).json({ error: "Game not found" });
+
+      const alreadyExists = game.teams?.some(t => t._id === team._id);
+      if (alreadyExists) {
+        return res.status(200).json({ message: "Team already added" });
+      }
+
+      await games.updateOne({ code }, { $push: { teams: team } });
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("❌ Failed to add team to game:", err);
+      res.status(500).json({ error: "Failed to add team to game", details: err.message });
+    }
+  }
+
+
 
 
 module.exports = {
@@ -133,5 +158,6 @@ module.exports = {
   updateGame,
   deleteGame,
   getGameByCode,
-  updateCurrentRound
+  updateCurrentRound,
+  addTeamToGame
 };
