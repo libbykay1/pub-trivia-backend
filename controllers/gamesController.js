@@ -18,6 +18,13 @@ async function createGame(req, res) {
   }
 }
 
+async function getGameByCode(req, res) {
+  const { code } = req.params;
+  const game = await getDB().collection("games").findOne({ code });
+  if (!game) return res.status(404).json({ error: "Game not found" });
+  res.json(game);
+}
+
 async function updateGame(req, res) {
     const { id } = req.params;
     const updatedGame = req.body;
@@ -98,4 +105,4 @@ async function deleteGame(req, res) {
   }
 
 
-module.exports = { createGame, getGames, getGameById, updateGame, deleteGame };
+module.exports = { createGame, getGames, getGameById, updateGame, deleteGame, getGameByCode };
