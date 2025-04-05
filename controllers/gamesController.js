@@ -126,27 +126,49 @@ async function deleteGame(req, res) {
   }
   async function addTeamToGame(req, res) {
     const { code } = req.params;
-    const team = req.body;
+    const teamData = req.body;
 
     try {
-      const games = getDB().collection("games");
+      const db = getDB();
+      const games = db.collection("games");
+      const teams = db.collection("teams");
 
-      const game = await games.findOne({ code });
-      if (!game) return res.status(404).json({ error: "Game not found" });
+      let teamToAdd;
 
-      const alreadyExists = game.teams?.some(t => t._id === team._id);
-      if (alreadyExists) {
-        return res.status(200).json({ message: "Team already added" });
+      // If this is a saved team (has an _id), fetch it
+      if (teamData._id) {
+        const existing = await teams.findOne({ _id: new ObjectId(teamData._id) });
+        if (!existing) {
+          return res.status(404).json({ error: "Team not found" });
+        }
+        teamToAdd = existing;
+      } else {
+        // Otherwise, insert it as a new team
+        const insertResult = await teams.insertOne({
+          ...teamData,
+          createdAt: new Date(),
+          ownerId: teamData.ownerId || null,
+        });
+        teamToAdd = await teams.findOne({ _id: insertResult.insertedId });
       }
 
-      await games.updateOne({ code }, { $push: { teams: team } });
+      // Add team to the game (without duplicating)
+      const updateResult = await games.updateOne(
+        { code },
+        { $addToSet: { teams: teamToAdd } }
+      );
 
-      res.json({ success: true });
+      if (updateResult.matchedCount === 0) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      res.json({ success: true, team: teamToAdd });
     } catch (err) {
       console.error("❌ Failed to add team to game:", err);
       res.status(500).json({ error: "Failed to add team to game", details: err.message });
     }
   }
+
 
 
 
