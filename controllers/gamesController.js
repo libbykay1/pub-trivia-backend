@@ -8,7 +8,8 @@ async function createGame(req, res) {
       ...req.body,
       createdAt: new Date(),
       rounds: [],         // initialize empty rounds array
-      status: "draft",    // optional status field
+      status: "draft",
+      currentRound: null,
     };
 
     const result = await getDB().collection("games").insertOne(game);
@@ -34,7 +35,6 @@ async function updateGame(req, res) {
     try {
       const games = getDB().collection("games");
       const objectId = new ObjectId(id);
-      console.log("🔍 Updating game with ID:", objectId);
 
       const updateResult = await games.updateOne(
         { _id: objectId },
@@ -103,6 +103,35 @@ async function deleteGame(req, res) {
       res.status(500).json({ error: "Delete failed", details: err.message });
     }
   }
+  async function updateCurrentRound(req, res) {
+    const { id } = req.params;
+    const { currentRound } = req.body;
+
+    try {
+      const result = await getDB().collection("games").updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { currentRound } }
+      );
+
+      if (result.modifiedCount === 0) {
+        return res.status(404).json({ error: "Game not found or no changes made" });
+      }
+
+      const updatedGame = await getDB().collection("games").findOne({ _id: new ObjectId(id) });
+      res.json(updatedGame);
+    } catch (err) {
+      console.error("❌ Failed to update current round:", err);
+      res.status(500).json({ error: "Failed to update current round", details: err.message });
+    }
+  }
 
 
-module.exports = { createGame, getGames, getGameById, updateGame, deleteGame, getGameByCode };
+module.exports = {
+  createGame,
+  getGames,
+  getGameById,
+  updateGame,
+  deleteGame,
+  getGameByCode,
+  updateCurrentRound
+};
