@@ -64,6 +64,13 @@ async function submitAnswers(req, res) {
     const round = game.rounds[parseInt(roundIndex)];
     if (!round) return res.status(404).json({ error: "Round not found" });
 
+    const existingSubmission = round.submissions?.find(
+        (s) => s.teamId === teamId
+      );
+      if (existingSubmission) {
+        return res.status(400).json({ error: "Team has already submitted for this round." });
+      }
+
     const { totalPoints, gradedAnswers } = gradeSubmission(round, { answers });
 
     const submission = {
