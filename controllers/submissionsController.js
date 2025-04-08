@@ -64,6 +64,10 @@ async function submitAnswers(req, res) {
     const round = game.rounds[parseInt(roundIndex)];
     if (!round) return res.status(404).json({ error: "Round not found" });
 
+    if (round.isLocked) {
+        return res.status(400).json({ error: "This round is locked, no more submissions allowed." });
+      }
+      
     const existingSubmission = round.submissions?.find(
         (s) => s.teamId === teamId
       );

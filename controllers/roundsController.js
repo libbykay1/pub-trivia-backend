@@ -8,6 +8,7 @@ async function saveRound(req, res) {
       createdAt: new Date(),
       published: false,
       createdBy: req.user?.uid || "anonymous", // if using auth
+      isLocked: false,
     };
     if (typeof round._id === "string") {
       delete round._id;
@@ -94,4 +95,35 @@ async function updateRound(req, res) {
   }
 }
 
-module.exports = { saveRound, getRounds, deleteRound, getRoundById, updateRound };
+async function lockRound(req, res) {
+  const { id } = req.params;
+  try {
+    // Update the round's 'isLocked' status
+    const result = await getDB()
+      .collection("rounds")
+      .updateOne({ _id: new ObjectId(id) }, { $set: { isLocked: true } });
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "Round not found" });
+    }
+
+    const updatedRound = await getDB()
+      .collection("rounds")
+      .findOne({ _id: new ObjectId(id) });
+
+    res.json(updatedRound);
+  } catch (err) {
+    console.error("❌ Failed to lock round:", err);
+    res.status(500).json({ error: "Failed to lock round", details: err.message });
+  }
+}
+
+
+module.exports = {
+  saveRound,
+  getRounds,
+  deleteRound,
+  getRoundById,
+  updateRound,
+  lockRound
+};
