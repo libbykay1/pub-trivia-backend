@@ -14,6 +14,6 @@ router.get("/", getRounds);
 router.delete("/:id", deleteRound);
 router.get("/:id", getRoundById);
 router.put("/:id", updateRound);
-router.patch("/rounds/:id/lock", lockRound);
+router.patch("/:id/lock", lockRound);
 
 module.exports = router;
