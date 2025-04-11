@@ -67,7 +67,7 @@ async function submitAnswers(req, res) {
     if (round.isLocked) {
         return res.status(400).json({ error: "This round is locked, no more submissions allowed." });
       }
-      
+
     const existingSubmission = round.submissions?.find(
         (s) => s.teamId === teamId
       );
@@ -97,6 +97,53 @@ async function submitAnswers(req, res) {
   }
 }
 
+async function updateSubmission(req, res) {
+    const { code, roundIndex, teamId } = req.params;
+    const { gradedAnswers, score } = req.body;
+
+    try {
+      const db = getDB();
+      const game = await db.collection("games").findOne({ code });
+
+      if (!game) return res.status(404).json({ error: "Game not found" });
+
+      const round = game.rounds[parseInt(roundIndex)];
+      if (!round) return res.status(404).json({ error: "Round not found" });
+
+      // Find the submission index
+      const submissionIndex = round.submissions?.findIndex(
+        (s) => s.teamId === teamId
+      );
+
+      if (submissionIndex === -1) {
+        return res.status(404).json({ error: "Submission not found" });
+      }
+
+      // Update the submission
+      await db.collection("games").updateOne(
+        { code },
+        {
+          $set: {
+            [`rounds.${roundIndex}.submissions.${submissionIndex}.gradedAnswers`]: gradedAnswers,
+            [`rounds.${roundIndex}.submissions.${submissionIndex}.score`]: score
+          }
+        }
+      );
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("❌ Failed to update submission:", err);
+      res.status(500).json({ error: "Failed to update submission", details: err.message });
+    }
+  }
+
+  // Add this to your exports
+  module.exports = {
+    submitAnswers,
+    updateSubmission
+  };
+
 module.exports = {
   submitAnswers,
+  updateSubmission
 };
