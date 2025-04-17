@@ -8,7 +8,8 @@ const {
     deleteGame,
     getGameByCode,
     updateCurrentRound,
-    addTeamToGame
+    addTeamToGame,
+    lockRoundInGame
 } = require("../controllers/gamesController");
 
 router.post("/", createGame);
@@ -19,6 +20,7 @@ router.delete("/:id", deleteGame);
 router.get("/code/:code", getGameByCode);
 router.put("/:id/current-round", updateCurrentRound);
 router.post("/code/:code/add-team", addTeamToGame);
+router.post("/games/:gameId/lockRound/:roundIndex", lockRoundInGame);
 
 
 module.exports = router;

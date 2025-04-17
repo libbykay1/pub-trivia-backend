@@ -1,5 +1,6 @@
 const { getDB } = require("../db");
 const { ObjectId } = require("mongodb");
+const { lock } = require("../routes/rounds");
 
 
 async function createGame(req, res) {
@@ -18,6 +19,52 @@ async function createGame(req, res) {
     res.status(500).json({ error: "Failed to create game", details: err });
   }
 }
+
+async function lockRoundInGame(req, res) {
+  const { gameId, roundIndex } = req.params;
+
+  try {
+    // Convert roundIndex to integer
+    const roundIdxNum = parseInt(roundIndex, 10);
+
+    // Create the update query with proper MongoDB syntax to set isLocked in the specific round
+    const updateQuery = {
+      $set: {
+        [`rounds.${roundIdxNum}.isLocked`]: true
+      }
+    };
+
+    const result = await getDB()
+      .collection("games")
+      .updateOne(
+        { _id: new ObjectId(gameId) },
+        updateQuery
+      );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "Game not found" });
+    }
+
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({ error: "Round could not be locked" });
+    }
+
+    // Get the updated game
+    const updatedGame = await getDB()
+      .collection("games")
+      .findOne({ _id: new ObjectId(gameId) });
+
+    res.json({
+      success: true,
+      message: "Round locked successfully",
+      game: updatedGame
+    });
+  } catch (err) {
+    console.error("❌ Failed to lock round in game:", err);
+    res.status(500).json({ error: "Failed to lock round", details: err.message });
+  }
+}
+
 
 async function getGameByCode(req, res) {
   const { code } = req.params;
@@ -181,5 +228,6 @@ module.exports = {
   deleteGame,
   getGameByCode,
   updateCurrentRound,
-  addTeamToGame
+  addTeamToGame,
+  lockRoundInGame
 };
