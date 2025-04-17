@@ -103,5 +103,4 @@ module.exports = {
   deleteRound,
   getRoundById,
   updateRound,
-  lockRound
 };
