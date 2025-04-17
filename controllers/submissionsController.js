@@ -137,11 +137,6 @@ async function updateSubmission(req, res) {
     }
   }
 
-  // Add this to your exports
-  module.exports = {
-    submitAnswers,
-    updateSubmission
-  };
 
 module.exports = {
   submitAnswers,

@@ -95,28 +95,6 @@ async function updateRound(req, res) {
   }
 }
 
-async function lockRound(req, res) {
-  const { id } = req.params;
-  try {
-    // Update the round's 'isLocked' status
-    const result = await getDB()
-      .collection("rounds")
-      .updateOne({ _id: new ObjectId(id) }, { $set: { isLocked: true } });
-
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ error: "Round not found" });
-    }
-
-    const updatedRound = await getDB()
-      .collection("rounds")
-      .findOne({ _id: new ObjectId(id) });
-
-    res.json(updatedRound);
-  } catch (err) {
-    console.error("❌ Failed to lock round:", err);
-    res.status(500).json({ error: "Failed to lock round", details: err.message });
-  }
-}
 
 
 module.exports = {
