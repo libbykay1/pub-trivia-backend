@@ -98,28 +98,41 @@ async function submitAnswers(req, res) {
 }
 
 async function updateSubmission(req, res) {
-    const { code, roundIndex, teamId } = req.params;
-    const { gradedAnswers, score } = req.body;
+  const { code, roundIndex, teamId } = req.params;
+  const { gradedAnswers = [], score } = req.body;
 
-    try {
-      const db = getDB();
-      const game = await db.collection("games").findOne({ code });
+  try {
+    const db = getDB();
+    const game = await db.collection("games").findOne({ code });
 
-      if (!game) return res.status(404).json({ error: "Game not found" });
+    if (!game) return res.status(404).json({ error: "Game not found" });
 
-      const round = game.rounds[parseInt(roundIndex)];
-      if (!round) return res.status(404).json({ error: "Round not found" });
+    const round = game.rounds[parseInt(roundIndex)];
+    if (!round) return res.status(404).json({ error: "Round not found" });
 
-      // Find the submission index
-      const submissionIndex = round.submissions?.findIndex(
-        (s) => s.teamId === teamId
+    const submissions = round.submissions || [];
+    const submissionIndex = submissions.findIndex(s => s.teamId === teamId);
+
+    if (submissionIndex === -1) {
+      // Add new submission
+      const newSubmission = {
+        teamId,
+        gradedAnswers,
+        score,
+        createdManually: true,
+        timestamp: new Date()
+      };
+
+      await db.collection("games").updateOne(
+        { code },
+        {
+          $push: {
+            [`rounds.${roundIndex}.submissions`]: newSubmission
+          }
+        }
       );
-
-      if (submissionIndex === -1) {
-        return res.status(404).json({ error: "Submission not found" });
-      }
-
-      // Update the submission
+    } else {
+      // Update existing submission
       await db.collection("games").updateOne(
         { code },
         {
@@ -129,13 +142,14 @@ async function updateSubmission(req, res) {
           }
         }
       );
-
-      res.json({ success: true });
-    } catch (err) {
-      console.error("❌ Failed to update submission:", err);
-      res.status(500).json({ error: "Failed to update submission", details: err.message });
     }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Failed to update submission:", err);
+    res.status(500).json({ error: "Failed to update submission", details: err.message });
   }
+}
 
 
 module.exports = {
