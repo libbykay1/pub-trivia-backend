@@ -14,14 +14,16 @@ function gradeSubmission(round, submission) {
 
     let pointsAwarded = 0;
 
-    if (!playerAnswer) {
+    if (!playerAnswer || playerAnswer.trim() === "") {
       gradedAnswers.push({ playerAnswer: "", correct: false, points: 0 });
       return;
     }
 
+    // Parse answers
+    const correctParts = correctAnswer.split(",").map((s) => s.trim().toLowerCase());
+    const playerParts = playerAnswer.split(",").map((s) => s.trim().toLowerCase());
+
     if (type === "multi-answer") {
-      const correctParts = correctAnswer.split(",").map((s) => s.trim().toLowerCase());
-      const playerParts = playerAnswer.split(",").map((s) => s.trim().toLowerCase());
       const matched = new Set();
 
       playerParts.forEach((ans) => {
@@ -32,7 +34,20 @@ function gradeSubmission(round, submission) {
       const numCorrect = matched.size;
       const required = Number(question.requiredCount || correctParts.length);
       const awardable = Math.min(numCorrect, required);
-      pointsAwarded = awardable * pointValue;
+      pointsAwarded = (awardable / required) * pointValue;
+
+    } else if (type === "multi-required") {
+      const matched = new Set();
+
+      playerParts.forEach((ans) => {
+        const match = correctParts.find((correct) => fuzz.partial_ratio(ans, correct) > 85);
+        if (match) matched.add(match);
+      });
+
+      const required = Number(question.requiredCount || correctParts.length);
+      const allMatched = matched.size >= required;
+      pointsAwarded = allMatched ? pointValue : 0;
+
     } else {
       const matchScore = fuzz.partial_ratio(
         playerAnswer.trim().toLowerCase(),
@@ -42,23 +57,22 @@ function gradeSubmission(round, submission) {
     }
 
     totalPoints += pointsAwarded;
+
     gradedAnswers.push({
       playerAnswer,
       correctAnswer,
-      points: pointsAwarded,
+      points: Math.round(pointsAwarded), // optional: round to integer
     });
   });
 
   return { totalPoints, gradedAnswers };
 }
 
+
 async function submitAnswers(req, res) {
   const { code, roundIndex } = req.params;
   const { teamId, answers } = req.body;
-  console.log("🔍 Received submission:", { teamId, answers });
-  if (!Array.isArray(answers)) {
-    return res.status(400).json({ error: "Answers must be an array." });
-  }
+
 
   try {
     const db = getDB();
