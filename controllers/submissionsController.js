@@ -85,10 +85,16 @@ async function submitAnswers(req, res) {
       submittedAt: new Date(),
     };
 
-    await db.collection("games").updateOne(
-      { code },
-      { $push: { [`rounds.${roundIndex}.submissions`]: submission } }
-    );
+// Push the new submission into the round in memory
+round.submissions = round.submissions || [];
+round.submissions.push(submission);
+
+// Save the modified rounds array back to the DB
+await db.collection("games").updateOne(
+  { code },
+  { $set: { rounds: game.rounds } }
+);
+
 
     res.json({ success: true, score: totalPoints });
   } catch (err) {
