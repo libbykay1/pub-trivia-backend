@@ -55,6 +55,10 @@ function gradeSubmission(round, submission) {
 async function submitAnswers(req, res) {
   const { code, roundIndex } = req.params;
   const { teamId, answers } = req.body;
+  console.log("🔍 Received submission:", { teamId, answers });
+  if (!Array.isArray(answers)) {
+    return res.status(400).json({ error: "Answers must be an array." });
+  }
 
   try {
     const db = getDB();
