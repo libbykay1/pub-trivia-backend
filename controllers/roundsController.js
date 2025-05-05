@@ -1,6 +1,14 @@
 const { getDB } = require("../db");
 const { ObjectId } = require("mongodb");
 
+function generateShuffledAnswers(round) {
+  const pairs = round.questions?.filter(q => !q.isDecoy) || [];
+  const decoys = round.questions?.filter(q => q.isDecoy) || [];
+  const allAnswers = [...pairs, ...decoys].map(q => q.answer);
+  return allAnswers.sort(() => Math.random() - 0.5);
+}
+
+
 async function saveRound(req, res) {
   try {
     const round = {
@@ -13,6 +21,11 @@ async function saveRound(req, res) {
     if (typeof round._id === "string") {
       delete round._id;
     }
+
+    if (round.type === "matching") {
+      round.shuffledAnswers = generateShuffledAnswers(round);
+    }
+
 
     const result = await getDB().collection("rounds").insertOne(round);
     const savedRound = await getDB().collection("rounds").findOne({ _id: result.insertedId });
@@ -76,7 +89,10 @@ async function updateRound(req, res) {
     const rounds = getDB().collection("rounds");
     const objectId = new ObjectId(id);
 
-    console.log("🔁 Updating round with ID:", objectId);
+    if (updatedRound.type === "matching" && Array.isArray(updatedRound.questions)) {
+      updatedRound.shuffledAnswers = generateShuffledAnswers(updatedRound);
+    }
+
 
     const updateResult = await rounds.updateOne(
       { _id: objectId },
