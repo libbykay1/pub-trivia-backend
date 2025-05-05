@@ -26,6 +26,10 @@ async function saveRound(req, res) {
       round.shuffledAnswers = generateShuffledAnswers(round);
     }
 
+    if (round.type === "one-clue" && typeof round.visibleClues !== "number") {
+      round.visibleClues = 1;
+    }
+
 
     const result = await getDB().collection("rounds").insertOne(round);
     const savedRound = await getDB().collection("rounds").findOne({ _id: result.insertedId });
