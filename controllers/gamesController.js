@@ -1,6 +1,5 @@
 const { getDB } = require("../db");
 const { ObjectId } = require("mongodb");
-const { lock } = require("../routes/rounds");
 
 function generateShuffledAnswers(round) {
   const pairs = round.questions?.filter(q => !q.isDecoy) || [];
@@ -26,48 +25,28 @@ async function createGame(req, res) {
   }
 }
 
-async function lockRoundInGame(req, res) {
+async function setVisibleClues(req, res) {
   const { gameId, roundIndex } = req.params;
+  const { visibleClues } = req.body;
+
+  if (typeof visibleClues !== "number") {
+    return res.status(400).json({ error: "visibleClues must be a number" });
+  }
 
   try {
-    // Convert roundIndex to integer
-    const roundIdxNum = parseInt(roundIndex, 10);
+    const game = await Game.findById(gameId);
+    if (!game) return res.status(404).json({ error: "Game not found" });
 
-    // Create the update query with proper MongoDB syntax to set isLocked in the specific round
-    const updateQuery = {
-      $set: {
-        [`rounds.${roundIdxNum}.isLocked`]: true
-      }
-    };
+    const round = game.rounds?.[roundIndex];
+    if (!round) return res.status(404).json({ error: "Round not found" });
 
-    const result = await getDB()
-      .collection("games")
-      .updateOne(
-        { _id: new ObjectId(gameId) },
-        updateQuery
-      );
+    round.visibleClues = visibleClues;
 
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ error: "Game not found" });
-    }
-
-    if (result.modifiedCount === 0) {
-      return res.status(400).json({ error: "Round could not be locked" });
-    }
-
-    // Get the updated game
-    const updatedGame = await getDB()
-      .collection("games")
-      .findOne({ _id: new ObjectId(gameId) });
-
-    res.json({
-      success: true,
-      message: "Round locked successfully",
-      game: updatedGame
-    });
+    await game.save();
+    res.json({ message: "visibleClues updated", visibleClues });
   } catch (err) {
-    console.error("❌ Failed to lock round in game:", err);
-    res.status(500).json({ error: "Failed to lock round", details: err.message });
+    console.error("Failed to update visibleClues:", err);
+    res.status(500).json({ error: "Server error" });
   }
 }
 
@@ -243,5 +222,5 @@ module.exports = {
   getGameByCode,
   updateCurrentRound,
   addTeamToGame,
-  lockRoundInGame
+  setVisibleClues
 };
