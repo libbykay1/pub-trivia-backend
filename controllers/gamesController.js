@@ -34,21 +34,36 @@ async function setVisibleClues(req, res) {
   }
 
   try {
-    const game = await Game.findById(gameId);
+    const db = getDB();
+    const games = db.collection("games");
+    const objectId = new ObjectId(gameId);
+
+    const game = await games.findOne({ _id: objectId });
     if (!game) return res.status(404).json({ error: "Game not found" });
 
     const round = game.rounds?.[roundIndex];
     if (!round) return res.status(404).json({ error: "Round not found" });
 
+    // Update the in-memory round value
     round.visibleClues = visibleClues;
 
-    await game.save();
+    // Save the whole updated rounds array
+    const result = await games.updateOne(
+      { _id: objectId },
+      { $set: { rounds: game.rounds } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(500).json({ error: "Failed to update round" });
+    }
+
     res.json({ message: "visibleClues updated", visibleClues });
   } catch (err) {
     console.error("Failed to update visibleClues:", err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server error", details: err.message });
   }
 }
+
 
 
 async function getGameByCode(req, res) {
