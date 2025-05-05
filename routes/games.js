@@ -9,7 +9,7 @@ const {
     getGameByCode,
     updateCurrentRound,
     addTeamToGame,
-    lockRoundInGame
+    setVisibleClues
 } = require("../controllers/gamesController");
 
 router.post("/", createGame);
@@ -20,7 +20,6 @@ router.delete("/:id", deleteGame);
 router.get("/code/:code", getGameByCode);
 router.put("/:id/current-round", updateCurrentRound);
 router.post("/code/:code/add-team", addTeamToGame);
-router.post("/games/:gameId/lockRound/:roundIndex", lockRoundInGame);
-
+router.put("/:gameId/rounds/:roundIndex/visibleClues", setVisibleClues);
 
 module.exports = router;
