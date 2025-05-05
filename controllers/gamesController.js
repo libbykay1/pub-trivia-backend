@@ -2,6 +2,12 @@ const { getDB } = require("../db");
 const { ObjectId } = require("mongodb");
 const { lock } = require("../routes/rounds");
 
+function generateShuffledAnswers(round) {
+  const pairs = round.questions?.filter(q => !q.isDecoy) || [];
+  const decoys = round.questions?.filter(q => q.isDecoy) || [];
+  const allAnswers = [...pairs, ...decoys].map(q => q.answer);
+  return allAnswers.sort(() => Math.random() - 0.5);
+}
 
 async function createGame(req, res) {
   try {
@@ -80,6 +86,14 @@ async function updateGame(req, res) {
     delete updatedGame._id;
 
     try {
+      if (Array.isArray(updatedGame.rounds)) {
+        updatedGame.rounds = updatedGame.rounds.map((r) => {
+          if (r.type === "matching" && Array.isArray(r.questions)) {
+            return { ...r, shuffledAnswers: generateShuffledAnswers(r) };
+          }
+          return r;
+        });
+      }
       const games = getDB().collection("games");
       const objectId = new ObjectId(id);
 
