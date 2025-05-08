@@ -1,6 +1,6 @@
 const { getDB } = require("../db");
 const { ObjectId } = require("mongodb");
-const fuzz = require("fuzzball"); // Make sure this is installed
+const fuzz = require("fuzzball");
 
 function gradeSubmission(round, submission) {
   let totalPoints = 0;
@@ -95,13 +95,20 @@ async function submitAnswers(req, res) {
 
     const { totalPoints, gradedAnswers } = gradeSubmission(round, { answers });
 
-    const submission = {
-      teamId,
-      answers,
-      gradedAnswers,
-      score: totalPoints,
-      submittedAt: new Date(),
-    };
+    let finalScore = totalPoints;
+if (round.doubleOrNothing && useDoubleOrNothing) {
+  const allCorrect = gradedAnswers.every(ans => ans.points > 0);
+  finalScore = allCorrect ? totalPoints * 2 : 0;
+}
+
+const submission = {
+  teamId,
+  answers,
+  gradedAnswers,
+  useDoubleOrNothing: !!useDoubleOrNothing,
+  score: finalScore,
+  submittedAt: new Date(),
+};
 
 // Push the new submission into the round in memory
 round.submissions = round.submissions || [];
