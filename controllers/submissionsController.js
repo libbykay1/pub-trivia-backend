@@ -71,7 +71,7 @@ function gradeSubmission(round, submission) {
 
 async function submitAnswers(req, res) {
   const { code, roundIndex } = req.params;
-  const { teamId, answers } = req.body;
+  const { teamId, answers, useDoubleOrNothing } = req.body;
 
 
   try {
