@@ -6,7 +6,8 @@ const {
   getTeams,
   getTeamById,
   updateTeam,
-  deleteTeam
+  deleteTeam,
+  addTeamGameHistoryEntry
 } = require("../controllers/teamsController");
 
 router.post("/", createTeam);
@@ -14,5 +15,7 @@ router.get("/", getTeams);
 router.get("/:id", getTeamById);
 router.put("/:id", updateTeam);
 router.delete("/:id", deleteTeam);
+router.post("/teams/:id/history", addTeamGameHistoryEntry);
+
 
 module.exports = router;

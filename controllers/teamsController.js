@@ -77,6 +77,46 @@ async function deleteTeam(req, res) {
     res.status(500).json({ error: "Failed to delete team", details: err.message });
   }
 }
+// Add a game history entry to a team
+async function addTeamGameHistoryEntry(req, res) {
+  try {
+    const { id } = req.params;
+    const {
+      gameId,
+      date,
+      location,
+      score,
+      placement,
+      link
+    } = req.body;
+
+    const entry = {
+      gameId: new ObjectId(gameId),
+      date,
+      location,
+      score,
+      placement,
+      link
+    };
+
+    const teams = getDB().collection("teams");
+
+    const updateResult = await teams.updateOne(
+      { _id: new ObjectId(id) },
+      { $push: { gameHistory: entry } }
+    );
+
+    if (updateResult.matchedCount === 0) {
+      return res.status(404).json({ error: "Team not found" });
+    }
+
+    const updated = await teams.findOne({ _id: new ObjectId(id) });
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error("❌ Failed to add game history entry:", err);
+    res.status(500).json({ error: "Failed to add game history", details: err.message });
+  }
+}
 
 module.exports = {
   createTeam,
@@ -84,4 +124,5 @@ module.exports = {
   getTeamById,
   updateTeam,
   deleteTeam,
+  addTeamGameHistoryEntry,
 };
