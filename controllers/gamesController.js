@@ -25,6 +25,37 @@ async function createGame(req, res) {
   }
 }
 
+async function submitRoundForPublishing(req, res) {
+  const { gameId, roundIndex } = req.params;
+
+  try {
+    const games = getDB().collection("games");
+    const game = await games.findOne({ _id: new ObjectId(gameId) });
+
+    if (!game) return res.status(404).json({ error: "Game not found" });
+
+    const index = parseInt(roundIndex);
+    if (!game.rounds || !game.rounds[index]) {
+      return res.status(400).json({ error: "Round not found at that index" });
+    }
+
+    game.rounds[index].submittedForPublishing = true;
+
+    const updateResult = await games.updateOne(
+      { _id: new ObjectId(gameId) },
+      { $set: { rounds: game.rounds } }
+    );
+
+    if (updateResult.modifiedCount === 0)
+      return res.status(500).json({ error: "Failed to update round" });
+
+    res.status(200).json({ success: true, round: game.rounds[index] });
+  } catch (err) {
+    console.error("❌ Failed to submit round:", err);
+    res.status(500).json({ error: "Failed to submit round", details: err.message });
+  }
+}
+
 async function setVisibleClues(req, res) {
   const { gameId, roundIndex } = req.params;
   const { visibleClues } = req.body;
@@ -237,5 +268,6 @@ module.exports = {
   getGameByCode,
   updateCurrentRound,
   addTeamToGame,
-  setVisibleClues
+  setVisibleClues,
+  submitRoundForPublishing
 };
