@@ -96,10 +96,13 @@ async function submitAnswers(req, res) {
     const { totalPoints, gradedAnswers } = gradeSubmission(round, { answers });
 
     let finalScore = totalPoints;
+const allCorrect = round.questions
+  .filter((q, i) => !q.isDecoy)
+  .every((_, i) => gradedAnswers[i]?.points > 0);
 if (round.doubleOrNothing && useDoubleOrNothing) {
-  const allCorrect = gradedAnswers.every(ans => ans.points > 0);
   finalScore = allCorrect ? totalPoints * 2 : 0;
 }
+
 
 const submission = {
   teamId,
