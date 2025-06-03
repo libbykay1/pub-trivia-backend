@@ -6,32 +6,33 @@ function gradeSubmission(round, submission) {
   let totalPoints = 0;
   const gradedAnswers = [];
 
-  if (round.type === "one-clue") {
-    const playerAnswer = submission.answers?.[0];
-    const correctAnswer = round.answer?.trim().toLowerCase();
+if (round.type === "one-clue") {
+  // Find the first answered clue
+  const clueUsedIndex = submission.answers.findIndex((a) => a?.trim() !== "");
+  const playerAnswer = submission.answers?.[clueUsedIndex]?.trim().toLowerCase();
+  const correctAnswer = round.answer?.trim().toLowerCase();
 
-    if (!playerAnswer || playerAnswer.trim() === "") {
-      gradedAnswers.push({ playerAnswer: "", correct: false, points: 0 });
-    } else {
-      const matchScore = fuzz.partial_ratio(playerAnswer.trim().toLowerCase(), correctAnswer);
-      let clueUsedIndex = submission.answers.findIndex((a) => a?.trim() !== "");
-      if (clueUsedIndex === -1) clueUsedIndex = round.questions.length - 1;
+  if (!playerAnswer) {
+    gradedAnswers.push({ playerAnswer: "", correct: false, points: 0 });
+  } else {
+    const matchScore = fuzz.partial_ratio(playerAnswer, correctAnswer);
+    const clue = round.questions[clueUsedIndex];
+    const pointValue = Number(clue.points || 0);
+    const pointsAwarded = matchScore > 85 ? pointValue : 0;
 
-      const clue = round.questions[clueUsedIndex];
-      const pointValue = Number(clue.points || 0);
-      const pointsAwarded = matchScore > 85 ? pointValue : 0;
+    totalPoints = pointsAwarded;
 
-      totalPoints = pointsAwarded;
-      gradedAnswers.push({
-        playerAnswer,
-        correctAnswer: round.answer,
-        clueUsed: clueUsedIndex + 1,
-        points: Math.round(pointsAwarded),
-      });
-    }
-
-    return { totalPoints, gradedAnswers };
+    gradedAnswers.push({
+      playerAnswer: submission.answers[clueUsedIndex],
+      correctAnswer: round.answer,
+      clueUsed: clueUsedIndex + 1,
+      points: Math.round(pointsAwarded),
+    });
   }
+
+  return { totalPoints, gradedAnswers };
+}
+
 
   // Standard grading
   round.questions.forEach((question, index) => {
