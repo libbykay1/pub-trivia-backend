@@ -6,6 +6,33 @@ function gradeSubmission(round, submission) {
   let totalPoints = 0;
   const gradedAnswers = [];
 
+  if (round.type === "one-clue") {
+    const playerAnswer = submission.answers?.[0];
+    const correctAnswer = round.answer?.trim().toLowerCase();
+    if (!playerAnswer || playerAnswer.trim() === "") {
+      gradedAnswers.push({ playerAnswer: "", correct: false, points: 0 });
+    } else {
+      const matchScore = fuzz.partial_ratio(playerAnswer.trim().toLowerCase(), correctAnswer);
+      // Points awarded depend on the fewest number of clues needed
+      let clueUsedIndex = submission.answers.findIndex((a) => a?.trim() !== "");
+      if (clueUsedIndex === -1) clueUsedIndex = round.questions.length - 1; // fallback
+      const question = round.questions[clueUsedIndex];
+      const pointValue = Number(question.points || 0);
+      const pointsAwarded = matchScore > 85 ? pointValue : 0;
+
+      totalPoints = pointsAwarded;
+      gradedAnswers.push({
+        playerAnswer,
+        correctAnswer: round.answer,
+        clueUsed: clueUsedIndex + 1,
+        points: Math.round(pointsAwarded)
+      });
+    }
+
+    return { totalPoints, gradedAnswers };
+  }
+
+  // Standard grading
   round.questions.forEach((question, index) => {
     const playerAnswer = submission.answers?.[index];
     const correctAnswer = question.answer;
@@ -19,40 +46,30 @@ function gradeSubmission(round, submission) {
       return;
     }
 
-    // Parse answers
     const correctParts = correctAnswer.split(",").map((s) => s.trim().toLowerCase());
     const playerParts = playerAnswer.split(",").map((s) => s.trim().toLowerCase());
 
     if (type === "multi-answer") {
       const matched = new Set();
-
       playerParts.forEach((ans) => {
         const match = correctParts.find((correct) => fuzz.partial_ratio(ans, correct) > 85);
         if (match) matched.add(match);
       });
-
       const numCorrect = matched.size;
       const required = Number(question.requiredCount || correctParts.length);
       const awardable = Math.min(numCorrect, required);
       pointsAwarded = (awardable / required) * pointValue;
-
     } else if (type === "multi-required") {
       const matched = new Set();
-
       playerParts.forEach((ans) => {
         const match = correctParts.find((correct) => fuzz.partial_ratio(ans, correct) > 85);
         if (match) matched.add(match);
       });
-
       const required = Number(question.requiredCount || correctParts.length);
       const allMatched = matched.size >= required;
       pointsAwarded = allMatched ? pointValue : 0;
-
     } else {
-      const matchScore = fuzz.partial_ratio(
-        playerAnswer.trim().toLowerCase(),
-        correctAnswer.trim().toLowerCase()
-      );
+      const matchScore = fuzz.partial_ratio(playerAnswer.trim().toLowerCase(), correctAnswer.trim().toLowerCase());
       if (matchScore > 85) pointsAwarded = pointValue;
     }
 
@@ -61,12 +78,13 @@ function gradeSubmission(round, submission) {
     gradedAnswers.push({
       playerAnswer,
       correctAnswer,
-      points: Math.round(pointsAwarded), // optional: round to integer
+      points: Math.round(pointsAwarded),
     });
   });
 
   return { totalPoints, gradedAnswers };
 }
+
 
 
 async function submitAnswers(req, res) {
