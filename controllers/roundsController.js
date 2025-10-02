@@ -43,7 +43,9 @@ async function saveRound(req, res) {
 
 async function getRounds(req, res) {
   try {
-    const rounds = await getDB().collection("rounds").find().toArray();
+    const { hostId } = req.query;
+    const query = hostId ? { hostId } : {};
+    const rounds = await getDB().collection("rounds").find(query).toArray();
     res.json(rounds);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch rounds" });
