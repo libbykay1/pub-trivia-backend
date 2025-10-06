@@ -10,7 +10,8 @@ const {
     updateCurrentRound,
     addTeamToGame,
     setVisibleClues,
-    submitRoundForPublishing
+    submitRoundForPublishing,
+    getSubmittedRoundsAdmin
 } = require("../controllers/gamesController");
 
 router.post("/", createGame);
@@ -23,5 +24,6 @@ router.put("/:id/current-round", updateCurrentRound);
 router.post("/code/:code/add-team", addTeamToGame);
 router.put("/:gameId/rounds/:roundIndex/visibleClues", setVisibleClues);
 router.put("/:gameId/rounds/:roundIndex/publish", submitRoundForPublishing);
+router.get("/admin/submitted-rounds", requireSingleAdmin, getSubmittedRoundsAdmin);
 
 module.exports = router;

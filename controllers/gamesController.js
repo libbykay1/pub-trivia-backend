@@ -254,6 +254,71 @@ async function deleteGame(req, res) {
       res.status(500).json({ error: "Failed to add team to game", details: err.message });
     }
   }
+async function getSubmittedRoundsAdmin(req, res) {
+  try {
+    const db = getDB();
+
+    // Aggregation: find games with submitted rounds, unwind, filter, shape
+    const cursor = db.collection("games").aggregate([
+      {
+        $match: {
+          $or: [
+            { "rounds.submittedForPublishing": true },
+            { "rounds.publishingStatus": "submitted" },
+          ],
+        },
+      },
+      { $unwind: { path: "$rounds", includeArrayIndex: "roundIndex" } },
+      {
+        $match: {
+          $or: [
+            { "rounds.submittedForPublishing": true },
+            { "rounds.publishingStatus": "submitted" },
+          ],
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          _gameId: "$_id",
+          _gameName: "$name",
+          _gameDate: "$date",
+          _gameLocation: "$location",
+          _roundIndex: "$roundIndex",
+
+          // round fields
+          round: {
+            _id: "$rounds._id",
+            theme: "$rounds.theme",
+            description: "$rounds.description",
+            type: "$rounds.type",
+            questions: "$rounds.questions",
+            submittedForPublishing: "$rounds.submittedForPublishing",
+            publishingStatus: "$rounds.publishingStatus",
+            updatedAt: "$rounds.updatedAt",
+          },
+        },
+      },
+      // Optional: newest first by game date if present
+      { $sort: { _gameDate: -1, "_roundIndex": 1 } },
+    ]);
+
+    const items = await cursor.toArray();
+    res.json({
+      rounds: items.map((doc) => ({
+        ...doc.round,
+        _gameId: doc._gameId,
+        _gameName: doc._gameName,
+        _gameDate: doc._gameDate,
+        _gameLocation: doc._gameLocation,
+        _roundIndex: doc._roundIndex,
+      })),
+    });
+  } catch (err) {
+    console.error("[getSubmittedRoundsAdmin] error:", err);
+    res.status(500).json({ error: "Failed to load submitted rounds", details: err.message });
+  }
+}
 
 
 
@@ -269,5 +334,6 @@ module.exports = {
   updateCurrentRound,
   addTeamToGame,
   setVisibleClues,
-  submitRoundForPublishing
+  submitRoundForPublishing,
+  getSubmittedRoundsAdmin,
 };
