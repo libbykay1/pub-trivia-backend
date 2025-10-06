@@ -1,11 +1,89 @@
 const { getDB } = require("../db");
 const { ObjectId } = require("mongodb");
+const { computeRoundHash } = require("../utils/roundHash");
 
 function generateShuffledAnswers(round) {
   const pairs = round.questions?.filter(q => !q.isDecoy) || [];
   const decoys = round.questions?.filter(q => q.isDecoy) || [];
   const allAnswers = [...pairs, ...decoys].map(q => q.answer);
   return allAnswers.sort(() => Math.random() - 0.5);
+}
+
+async function publishGameRoundToLibrary(req, res) {
+  const { gameId, roundIndex } = req.params;
+
+  try {
+    const db = getDB();
+    const gamesCol = db.collection("games");
+    const roundsCol = db.collection("rounds");
+
+    const game = await gamesCol.findOne({ _id: new ObjectId(gameId) });
+    if (!game) return res.status(404).json({ error: "Game not found" });
+
+    const idx = Number(roundIndex);
+    const round = game.rounds?.[idx];
+    if (!round) return res.status(404).json({ error: "Round not found at that index" });
+
+    const contentHash = computeRoundHash(round);
+
+    const usageEntry = {
+      gameId: game._id,
+      gameName: game.name || "",
+      date: game.date || null,          // string like "YYYY-MM-DD" if you store it that way
+      location: game.location || "",
+      roundIndex: idx,
+      usedAt: new Date(),
+    };
+
+    let lib = await roundsCol.findOne({ contentHash });
+
+    if (!lib) {
+      const insertDoc = {
+        number: round.number || idx + 1,
+        hostId: game.hostId || round.hostId || null,
+        theme: round.theme || "",
+        description: round.description || "",
+        type: round.type || "",
+        doubleOrNothing: !!round.doubleOrNothing,
+        betting: !!round.betting,
+        questions: round.questions || [],
+        isLocked: !!round.isLocked,
+        createdAt: new Date(),
+        createdBy: round.createdBy || "system",
+        published: true,
+        publishedAt: new Date(),
+        submittedForPublishing: !!round.submittedForPublishing,
+        contentHash,
+        usages: [usageEntry],
+      };
+      const result = await roundsCol.insertOne(insertDoc);
+      lib = { _id: result.insertedId, ...insertDoc };
+    } else {
+      await roundsCol.updateOne(
+        { _id: lib._id },
+        {
+          $set: {
+            published: true,
+            publishedAt: lib.published ? lib.publishedAt : new Date(),
+          },
+          $addToSet: { usages: usageEntry },
+        }
+      );
+      lib = await roundsCol.findOne({ _id: lib._id });
+    }
+
+    // Optional backlink from game round → library round
+    game.rounds[idx].publishedRoundId = lib._id;
+    await gamesCol.updateOne(
+      { _id: game._id },
+      { $set: { rounds: game.rounds } }
+    );
+
+    return res.json({ success: true, roundId: lib._id, round: lib });
+  } catch (err) {
+    console.error("❌ publishGameRoundToLibrary failed:", err);
+    return res.status(500).json({ error: "Failed to publish round", details: err.message });
+  }
 }
 
 async function createGame(req, res) {
@@ -336,4 +414,5 @@ module.exports = {
   setVisibleClues,
   submitRoundForPublishing,
   getSubmittedRoundsAdmin,
+  publishGameRoundToLibrary,
 };

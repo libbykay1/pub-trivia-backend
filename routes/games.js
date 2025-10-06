@@ -11,7 +11,8 @@ const {
     addTeamToGame,
     setVisibleClues,
     submitRoundForPublishing,
-    getSubmittedRoundsAdmin
+    getSubmittedRoundsAdmin,
+    publishGameRoundToLibrary
 } = require("../controllers/gamesController");
 
 const { requireSingleAdmin } = require("../middleware/requireSingleAdmin.js");
@@ -27,5 +28,10 @@ router.post("/code/:code/add-team", addTeamToGame);
 router.put("/:gameId/rounds/:roundIndex/visibleClues", setVisibleClues);
 router.put("/:gameId/rounds/:roundIndex/publish", submitRoundForPublishing);
 router.get("/admin/submitted-rounds", requireSingleAdmin, getSubmittedRoundsAdmin);
+router.put(
+  "/admin/games/:gameId/rounds/:roundIndex/publish-to-library",
+  requireSingleAdmin,
+  publishGameRoundToLibrary
+);
 
 module.exports = router;
