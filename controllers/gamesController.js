@@ -21,15 +21,18 @@ async function publishGameRoundToLibrary(req, res) {
     if (!game) return res.status(404).json({ error: "Game not found" });
 
     const idx = Number(roundIndex);
-    const round = game.rounds?.[idx];
-    if (!round) return res.status(404).json({ error: "Round not found at that index" });
+    if (!Number.isInteger(idx) || !game.rounds || !game.rounds[idx]) {
+      return res.status(400).json({ error: "Invalid round index" });
+    }
 
+    const round = game.rounds[idx];
     const contentHash = computeRoundHash(round);
 
     const usageEntry = {
+      key: `${game._id}:${idx}:${game.date || ""}`,
       gameId: game._id,
       gameName: game.name || "",
-      date: game.date || null,          // string like "YYYY-MM-DD" if you store it that way
+      date: game.date || null,
       location: game.location || "",
       roundIndex: idx,
       usedAt: new Date(),
@@ -72,11 +75,17 @@ async function publishGameRoundToLibrary(req, res) {
       lib = await roundsCol.findOne({ _id: lib._id });
     }
 
-    // Optional backlink from game round → library round
-    game.rounds[idx].publishedRoundId = lib._id;
+    // mark the embedded game round as published (and clear submission flag)
     await gamesCol.updateOne(
       { _id: game._id },
-      { $set: { rounds: game.rounds } }
+      {
+        $set: {
+          [`rounds.${idx}.submittedForPublishing`]: false,
+          [`rounds.${idx}.publishingStatus`]: "published",
+          [`rounds.${idx}.publishedAt`]: new Date(),
+          [`rounds.${idx}.publishedRoundId`]: lib._id,
+        },
+      }
     );
 
     return res.json({ success: true, roundId: lib._id, round: lib });
@@ -85,6 +94,7 @@ async function publishGameRoundToLibrary(req, res) {
     return res.status(500).json({ error: "Failed to publish round", details: err.message });
   }
 }
+
 
 async function createGame(req, res) {
   try {
