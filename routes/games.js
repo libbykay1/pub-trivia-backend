@@ -14,6 +14,8 @@ const {
     getSubmittedRoundsAdmin
 } = require("../controllers/gamesController");
 
+const { requireSingleAdmin } = require("../middleware/requireSingleAdmin.js");
+
 router.post("/", createGame);
 router.get("/", getGames);
 router.get("/:id", getGameById);
