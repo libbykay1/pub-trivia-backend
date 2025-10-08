@@ -16,7 +16,7 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://your-frontend.netlify.app" // replace this later with your real Netlify URL
+  "https://community-trivia.netlify.app" 
 ];
 
 
